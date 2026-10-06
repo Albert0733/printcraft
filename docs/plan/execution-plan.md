@@ -35,12 +35,34 @@ Adobe-data allowlist (AGENTS.md §1.1), any new copyleft or network dependency, 
 layering table, anything that would make a save lossy, and anything that turns a feature on by
 default that was off.
 
-### 1.1 Branch and pull request
+### 1.1 Branches and pull requests
 
-`main` is the integration branch and is **never** committed or pushed to directly. Every change,
-including a one-line documentation fix, lands through a pull request.
+Four long-lived branches, promoted in one direction. **None of them is ever committed or pushed
+to directly** — every change, including a one-line documentation fix, lands through a pull
+request.
 
-1. **Branch from an up-to-date `main`**, named `<type>/<slug>`, or `<type>/<issue>-<slug>` when it
+```
+<type>/<slug>  ──PR──▶  dev  ──PR──▶  main  ──PR──▶  release
+  your work            integration    stable        installers
+```
+
+| Branch | What it is | What may enter it |
+|---|---|---|
+| `<type>/<slug>` | Where work happens | Your commits |
+| `dev` | Integration. Where features meet each other for the first time | PRs from work branches |
+| `main` | Stable. What a clone gets, and what the README describes | Promotion PRs from `dev` |
+| `release` | Triggers the signed-installer pipeline (`release.yml`) | Promotion PRs from `main` |
+
+**Why `dev` exists:** a PR is green against the branch it was *written* on, which proves nothing
+about it meeting the three PRs that merged while it was in review. `dev` is where that collision
+happens, so `main` stays a branch you can clone and trust.
+
+CI runs on every pull request (no branch filter) and on pushes to `main`, `dev` and `release`, so
+each merge is verified as *integrated*, not just as proposed.
+
+#### Day-to-day: work branch to `dev`
+
+1. **Branch from an up-to-date `dev`**, named `<type>/<slug>`, or `<type>/<issue>-<slug>` when it
    closes an issue:
 
    | Type | For | Example |
@@ -59,16 +81,40 @@ including a one-line documentation fix, lands through a pull request.
    PR (`.github/workflows/ci.yml` triggers on `pull_request`), across macOS, Windows, Linux, a
    wasm32 check, `cargo-deny` and the nightly fuzz job — so a red PR means a red branch, not a
    flaky runner. Investigate rather than re-running.
-4. **Open the PR against `main`**, filling in `.github/pull_request_template.md`: what changed,
-   why, how it was verified, and which `parity/acrobat-features.toml` entries moved. Link the
-   issue with `Closes #N` where there is one.
+4. **Open the PR against `dev`** — never against `main` — filling in
+   `.github/pull_request_template.md`: what changed, why, how it was verified, and which
+   `parity/acrobat-features.toml` entries moved. Link the issue with `Closes #N` where there is
+   one. Check the base branch before you submit; a repository default can quietly aim it at
+   `main`.
 5. **Merge only green**, and prefer a merge commit so the branch name survives in the history
    (this is what the existing `Merge pull request #88 from storytold/docs/roadmap-session-15`
    commits are). Delete the branch afterwards.
+6. **Rebase, don't merge back.** If `dev` moved under you, `git rebase origin/dev` and re-run the
+   gates. Keep work branches short-lived so this stays cheap.
 
 Rules of thumb: keep a PR to one concern; if the diff needs the word "and" twice to describe, it
 is two PRs. A PR that changes a feature's parity status must move that entry in the same PR, not
 a follow-up.
+
+#### Promotion: `dev` to `main`
+
+A promotion PR is a batch, not a feature. Open one when `dev` holds a coherent set of finished
+work — typically at the end of a session, or when a milestone's tasks are all ticked.
+
+- Title it `Promote dev to main: <what it contains>`; the body lists the PRs being promoted and
+  anything a user would notice. The template's per-change checklist does not apply — those were
+  checked on the way into `dev` — so replace it with the batch summary.
+- `main` must be fast-forwardable from `dev`. If it is not, something was pushed to `main`
+  directly; find out what before merging.
+- Update the `ROADMAP.md` log and progress table in the promotion PR, not in each feature PR, so
+  the log reads as one line per session rather than one per commit.
+- Merge only when CI is green **on `dev` itself**, not merely on the PRs that fed it.
+
+#### Promotion: `main` to `release`
+
+Only for cutting a release. `release.yml` builds signed installers for every platform on push, so
+treat the merge as the release action itself. Version bumps (`cargo xtask version set X.Y.Z`) go
+in the promotion PR.
 
 ### Definition of done
 

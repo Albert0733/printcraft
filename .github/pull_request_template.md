@@ -1,4 +1,8 @@
 <!--
+BASE BRANCH: `dev`, not `main`. Work flows <type>/<slug> -> dev -> main -> release.
+Check the base above before submitting; the repository default may aim it at main.
+A dev -> main promotion PR is a batch: replace this template with a summary of what it promotes.
+
 Branch naming and the full workflow: docs/plan/execution-plan.md §1.1
 Keep a PR to one concern. If describing the diff needs "and" twice, it is two PRs.
 -->

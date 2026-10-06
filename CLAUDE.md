@@ -32,7 +32,7 @@ PrintCraft is a clean-room, open-source, Rust-native PDF application targeting A
   - Every crash fix gets a synthetic regression test. See `AGENTS.md` §4 and `craftrules/standards/never-crash.md`.
 - **Rust only** in the product and build (`xtask`). No handwritten JS/TS.
 - **Quality gates** before every commit: `cargo fmt --check`, `cargo clippy --workspace -- -D warnings`, `cargo test --workspace`, and the wasm check once `xtask ci` exists (M0).
-- **Commits and PRs:** `main` is never committed or pushed to directly. Branch as `<type>/<slug>` (`feat/`, `fix/`, `docs/`, `chore/`, `refactor/`), one task id per commit (e.g. `M1.4: xref stream reader`), commit only green states, and open a pull request against `main` using `.github/pull_request_template.md`. Merge only when CI is green. End commit messages with the attribution line required by the environment. Full rules: `docs/plan/execution-plan.md` §1.1.
+- **Commits and PRs:** work flows `<type>/<slug>` → **`dev`** → `main` → `release`, and **no branch is ever committed or pushed to directly**. Branch from an up-to-date `dev` as `<type>/<slug>` (`feat/`, `fix/`, `docs/`, `chore/`, `refactor/`), one task id per commit (e.g. `M1.4: xref stream reader`), commit only green states, and open a pull request **against `dev`** — not `main` — using `.github/pull_request_template.md`. Merge only when CI is green. `main` receives promotion PRs from `dev`; `release` receives them from `main` and builds the installers. End commit messages with the attribution line required by the environment. Full rules: `docs/plan/execution-plan.md` §1.1.
 
 ## Running and looking at the app
 - `cargo run -p printcraft -- <file.pdf>` opens the desktop app.
