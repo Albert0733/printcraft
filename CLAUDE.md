@@ -3,13 +3,13 @@
 PrintCraft is a clean-room, open-source, Rust-native PDF application targeting Adobe Acrobat Pro parity. It runs natively on macOS, Windows, Linux and FreeBSD, and on the web via WASM. It is the sibling of `../photocraft` (a Photoshop-class editor) and follows the same conventions.
 
 ## Start every session here
-1. Read `plan/STATUS.md`: the current milestone, the next unchecked task and any blockers. `ROADMAP.md` holds the milestone estimates and progress; update its table and log at the end of every session.
+1. Read `docs/plan/STATUS.md`: the current phase, the next unchecked task, the blockers and the open owner decisions. `ROADMAP.md` holds the milestone estimates and progress; update its table and log at the end of every session.
    - Read `ROADMAP.md` §Honest assessment and §Where we're lacking and where we're going before choosing work. They rank the gaps (own renderer, hardening, fidelity against Acrobat, editing existing content, Pro workflows, 1.0 polish); prefer them over new P2/P3 features, and keep both sections true when things change.
    - "Shipped" in `parity/` means "exists and tested", not "as good as Acrobat". Don't mark a feature shipped on a generic test, and say in its notes what is still missing.
-2. Read that task in `plan/execution-plan.md` §3, the relevant section of `plan/architecture.md`, and the README of the crate you're touching.
-3. Follow the **autonomous operation protocol** in `plan/execution-plan.md` §7 (orient → plan → implement + test → verify → record → commit). Don't stop to ask unless §7 lists the decision as the user's.
+2. Read that task in `docs/plan/execution-plan.md`, the relevant section of `docs/plan/architecture.md`, and the README of the crate you're touching.
+3. Follow the **session protocol** in `docs/plan/execution-plan.md` §1 (orient → plan → implement + test → verify → record → commit). Don't stop to ask unless §1 lists the decision as the owner's.
 
-`plan/` is gitignored (local-only, like PhotoCraft). The machine-readable parity checklist lives in `parity/` (committed).
+**Two plan directories.** `docs/plan/` is committed and is the canonical plan for current development. A top-level `plan/` is gitignored and local-only (like PhotoCraft); where it exists it holds the original authors' notes, and it is the only source for the Acrobat black-box observations (`plan/acrobat/`) and the ADRs — read it if you have it, but nothing depends on it and nothing overwrites it. Code comments citing `plan/architecture.md §3` and similar describe the same rules as `docs/plan/architecture.md`; `cargo xtask layers` enforces them either way. The machine-readable parity checklist lives in `parity/` (committed).
 
 ## Non-negotiables
 - **Assets: read `AGENTS.md` §1 before adding or showing any icon, image, font or document.** No assets from Adobe products, ever. Only openly licensed or contributor-original assets are allowed, each with an entry in `ATTRIBUTION.toml`. `cargo xtask assets` enforces this. `AGENTS.md` overrides this file.
@@ -32,7 +32,7 @@ PrintCraft is a clean-room, open-source, Rust-native PDF application targeting A
   - Every crash fix gets a synthetic regression test. See `AGENTS.md` §4 and `craftrules/standards/never-crash.md`.
 - **Rust only** in the product and build (`xtask`). No handwritten JS/TS.
 - **Quality gates** before every commit: `cargo fmt --check`, `cargo clippy --workspace -- -D warnings`, `cargo test --workspace`, and the wasm check once `xtask ci` exists (M0).
-- **Commits:** one task id per commit (e.g. `M1.4: xref stream reader`). Commit only green states. End messages with the attribution line required by the environment.
+- **Commits and PRs:** `main` is never committed or pushed to directly. Branch as `<type>/<slug>` (`feat/`, `fix/`, `docs/`, `chore/`, `refactor/`), one task id per commit (e.g. `M1.4: xref stream reader`), commit only green states, and open a pull request against `main` using `.github/pull_request_template.md`. Merge only when CI is green. End commit messages with the attribution line required by the environment. Full rules: `docs/plan/execution-plan.md` §1.1.
 
 ## Running and looking at the app
 - `cargo run -p printcraft -- <file.pdf>` opens the desktop app.
