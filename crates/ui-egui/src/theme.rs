@@ -130,6 +130,14 @@ pub fn font_definitions() -> FontDefinitions {
             fonts.families.entry(family).or_default().push(name.clone());
         }
     }
+    // AI編輯：系統中文字型（含繁中）加入所有家族的最後後備，讓繁體中文介面
+    // 在未以 craft-fonts 建置時也能正確顯示（Windows 微軟正黑體、macOS PingFang TC 等）。
+    for (name, data) in system_cjk_fonts() {
+        fonts.font_data.insert(name.clone(), data);
+        for family in [FontFamily::Proportional, FontFamily::Monospace] {
+            fonts.families.entry(family).or_default().push(name.clone());
+        }
+    }
     let fallback: Vec<String> = fonts.families[&FontFamily::Proportional].clone();
     for (fam, primary) in [("medium", "Inter-Medium"), ("semibold", "Inter-SemiBold")] {
         let mut stack = vec![primary.to_owned()];
@@ -137,6 +145,54 @@ pub fn font_definitions() -> FontDefinitions {
         fonts.families.insert(FontFamily::Name(fam.into()), stack);
     }
     fonts
+}
+
+// AI編輯：掃描系統已安裝的中文字型，依優先順序列出（繁體黑體在前）。
+const SYSTEM_CJK_FONTS: &[(&str, u32)] = &[
+    ("msjh.ttc", 0), // Microsoft JhengHei（繁中黑體）
+    ("msjhbd.ttc", 0),
+    ("msjhl.ttc", 0),
+    ("msyh.ttc", 0), // Microsoft YaHei
+    ("msyhbd.ttc", 0),
+    ("simsun.ttc", 0),
+    ("Deng.ttf", 0),
+    ("Dengb.ttf", 0),
+    ("simhei.ttf", 0),
+    ("PingFang.ttc", 0), // macOS PingFang TC/SC
+    ("STHeiti Light.ttc", 0),
+    ("Hiragino Sans GB.ttc", 0),
+    ("NotoSansCJK-Regular.ttc", 0),
+    ("NotoSansCJKtc-Regular.otf", 0),
+    ("wqy-microhei.ttc", 0),
+    ("wqy-zenhei.ttc", 0),
+];
+
+fn system_cjk_fonts() -> Vec<(String, Arc<FontData>)> {
+    let dirs = [
+        "C:\\Windows\\Fonts",
+        "/System/Library/Fonts",
+        "/System/Library/Fonts/Supplemental",
+        "/usr/share/fonts/opentype/noto",
+        "/usr/share/fonts/truetype/wqy",
+    ];
+    let mut out = Vec::new();
+    for (file, index) in SYSTEM_CJK_FONTS {
+        let mut path = None;
+        for dir in dirs {
+            let candidate = std::path::Path::new(dir).join(file);
+            if candidate.is_file() {
+                path = Some(candidate);
+                break;
+            }
+        }
+        if let Some(path) = path {
+            if let Ok(bytes) = std::fs::read(path) {
+                let name = format!("system-cjk-{}", file.replace(['.', ' ', '-'], "_"));
+                out.push((name, Arc::new(FontData { font: std::borrow::Cow::Owned(bytes), index: *index, tweak: Default::default() })));
+            }
+        }
+    }
+    out
 }
 
 pub fn regular(size: f32) -> FontId {
